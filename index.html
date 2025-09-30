@@ -19,16 +19,17 @@
         {
           "data": {"url": "au.json", "format": {"type": "geojson"}},
           "mark": {"type": "geoshape", "stroke":"white","strokeWidth":0.8},
-          "encoding": {"color": {"value": "#f0ffff"}}
+          "encoding": {"color": {"value": "#f0f0f0"}}
         },
         {
           "data": {"url": "au.json", "format": {"type": "geojson"}},
           "transform": [
+            {"flatten": ["properties.id", "properties.name"]},
             {
-              "lookup": "properties.id",        
+              "lookup": "properties.id",
               "from": {
                 "data": {"url": "state_weather.csv"},
-                "key": "state",                 
+                "key": "state",
                 "fields": ["value"]
               }
             }
