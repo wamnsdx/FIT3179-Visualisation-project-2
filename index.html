@@ -17,12 +17,12 @@
       "projection": {"type": "mercator"},
       "layer": [
         {
-          "data": {"url": "https://github.com/wamnsdx/FIT3179-Visualisation-project-2/blob/main/au.json", "format": {"type": "geojson"}},
+          "data": {"url": "au.topojson", "format": {"type": "topojson"}},
           "mark": {"type": "geoshape", "stroke":"white","strokeWidth":0.8},
           "encoding": {"color": {"value": "#f0f0f0"}}
         },
         {
-          "data": {"url": "https://github.com/wamnsdx/FIT3179-Visualisation-project-2/blob/main/au.json", "format": {"type": "geojson"}},
+          "data": {"url": "au.topojson", "format": {"type": "topojson"}},
           "transform": [
             {"flatten": ["properties.id", "properties.name"]},
             {
