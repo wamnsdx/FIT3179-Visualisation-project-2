@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Australia Weather Map</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    const spec = {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "width": 800,
+      "height": 600,
+      "projection": {"type": "mercator"},
+      "layer": [
+        {
+          "data": {"url": "au.json", "format": {"type": "geojson"}},
+          "mark": {"type": "geoshape", "stroke":"white","strokeWidth":0.8},
+          "encoding": {"color": {"value": "#f0ffff"}}
+        },
+        {
+          "data": {"url": "au.json", "format": {"type": "geojson"}},
+          "transform": [
+            {
+              "lookup": "properties.id",        
+              "from": {
+                "data": {"url": "state_weather.csv"},
+                "key": "state",                 
+                "fields": ["value"]
+              }
+            }
+          ],
+          "mark": {"type": "geoshape", "stroke":"white"},
+          "encoding": {
+            "color": {
+              "field": "value",
+              "type": "quantitative",
+              "scale": {"scheme": "blues"},
+              "legend": {"title": "Rainfall (mm)"}
+            },
+            "tooltip": [
+              {"field": "properties.name", "type": "nominal", "title": "State"},
+              {"field": "value", "type": "quantitative"}
+            ]
+          }
+        }
+      ]
+    };
+
+    vegaEmbed('#vis', spec, {mode: "vega-lite"}).catch(console.error);
+  </script>
+</body>
+</html>
