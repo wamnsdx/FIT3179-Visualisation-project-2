@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.20.8"></script>
   <!-- ✅ Add Pure.css for grid layout -->
   <link rel="stylesheet" href="https://unpkg.com/purecss@2.1.0/build/pure-min.css">
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -42,13 +43,20 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       margin: 0 auto;
     }
+    /* === Layout Grid Adjustments === */
     .pure-g {
-      justify-content: center;
       align-items: flex-start;
       margin-bottom: 60px;
     }
+    .pure-g.center {
+      justify-content: center;
+    }
+    .pure-g.space-between {
+      justify-content: space-between;
+    }
   </style>
 </head>
+
 <body>
   <h1>Global Data Visualisation Dashboard</h1>
 
@@ -59,7 +67,7 @@
   </p>
 
   <!-- 🌡️ First map + side text -->
-  <div class="pure-g">
+  <div class="pure-g center">
     <div class="pure-u-1 pure-u-md-1-2">
       <div id="map_temp" class="chart"></div>
     </div>
@@ -88,139 +96,226 @@
     </div>
   </div>
 
+
   <!-- 👥 Population map -->
-  <div class="pure-g">
+  <div class="pure-g center">
     <div class="pure-u-1">
       <div id="map_pop" class="chart"></div>
     </div>
-    <div class="pure-u-1 pure-u-md-1-2">
-        <div class="side-text">
-          <b>About global population distributions:</b><br><br>
-          It seems that many countries has a very similar population with each other, 
-          except China and India, which have a much higher population. 
-        </div>
+  </div>
+
+  <!-- 📝 Description under Population Map -->
+  <div class="pure-g center">
+    <div class="pure-u-1">
+      <div class="side-text">
+        <b>About Global Population Patterns:</b><br><br>
+        It seems that many countries has a very similar population with each other, 
+        except China and India, which have a much higher population.
+      </div>
+    </div>
   </div>
 
   <!-- 💚 Life Expectancy Map + Bar Chart -->
-  <div class="pure-g">
-    <div class="pure-u-1 pure-u-md-1-2">
-      <div id="map_life" class="chart"></div>
+<div class="pure-g" style="display: flex; justify-content: center; align-items: flex-start; gap: 40px; margin-bottom: 60px;">
+    <div class="pure-u-1 pure-u-md-1-2" style="flex: 1; text-align: left;">
+      <div id="map_life" class="chart" style="width: 100%; max-width: 700px;"></div>
     </div>
-    <div class="pure-u-1 pure-u-md-1-2">
-      <div id="bar_life" class="chart"></div>
+    <div class="pure-u-1 pure-u-md-1-2" style="flex: 0 0 450px; text-align: right;">
+      <div id="bar_life" class="chart" style="width: 100%;"></div>
+    </div>
+  </div>
+
+  <!-- 📈 Line chart comparing temperature and life expectancy -->
+<div class="pure-g center">
+    <div class="pure-u-1">
+      <div id="line_temp_life" class="chart"></div>
+    </div>
+  </div>
+
+  <!-- 📊 Line chart: Rainfall vs Life Expectancy -->
+<div class="pure-g center">
+    <div class="pure-u-1">
+      <div id="line_rain_life" class="chart"></div>
+    </div>
+  </div>
+
+  <!-- 📝 Description of Conclusion -->
+  <div class="pure-g center">
+    <div class="pure-u-1">
+      <div class="side-text">
+        <b>Conclusion based on the whole visualisation:</b><br><br>
+        Based on the comparison between the weather-related data and the population & average life expectancy, 
+        we can make conclude that there is no clear relationship between the temperature/rainfall and the population of a particular country. 
+        However, if a country tends to be drier and hotter, the average life expectancy tends to be lower. 
+      </div>
     </div>
   </div>
 
   <script>
     // === MAP 1: Average Temperature ===
-    const mapTemperature = {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "title": "Average Temperature of Each Country (2024)",
-      "width": 800,
-      "height": 400,
-      "params": [
+    // === MAP 1: Average Temperature (with greyed-out countries) ===
+const mapTemperature = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Average Temperature of Each Country (2024)",
+  "width": 800,
+  "height": 400,
+  "params": [{
+    "name": "temp_filter",
+    "value": -10,
+    "bind": {
+      "input": "range",
+      "min": -10,
+      "max": 30,
+      "step": 1,
+      "name": "Min temperature filter: "
+    }
+  }],
+  "projection": {"type": "equalEarth"},
+  "layer": [
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
+        "format": {"type": "topojson", "feature": "oceans"}
+      },
+      "mark": {"type": "geoshape", "fill": "skyblue"}
+    },
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
+        "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}
+      },
+      "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
+    },
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
+        "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}
+      },
+      "transform": [
         {
-          "name": "temp_filter",
-          "value": -10,
-          "bind": {
-            "input": "range",
-            "min": -10,
-            "max": 30,
-            "step": 1,
-            "name": "Min temperature filter: "
+          "lookup": "properties.NAME",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"
+            },
+            "key": "Country",
+            "fields": ["Active"]
+          }
+        },
+        {"calculate": "datum.Active", "as": "Average temperature in 2024"}
+      ],
+      "mark": {"type": "geoshape", "stroke": "white"},
+      "encoding": {
+        "color": {
+          "condition": {
+            "test": "datum['Average temperature in 2024'] >= temp_filter",
+            "field": "Average temperature in 2024",
+            "type": "quantitative",
+            "scale": {
+              "type": "threshold",
+              "domain": [0, 5, 10, 15, 20, 25],
+              "range": ["#fff7ec","#fee8c8","#fdd49e","#fdbb84","#fc8d59","#e34a33","#b30000"]
+            },
+            "legend": {"title": "Average temperature (°C)"}
+          },
+          "value": "lightgray" // countries below threshold shown in grey
+        },
+        "tooltip": [
+          {"field": "properties.NAME", "type": "nominal", "title": "Country"},
+          {"field": "Average temperature in 2024", "type": "quantitative", "format": ".1f"}
+        ]
+      }
+    }
+  ]
+};
+
+
+    // === MAP 1B: Average Annual Rainfall ===
+    // === MAP 1B: Average Annual Rainfall (with annotation) ===
+const mapRainfall = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Average Annual Rainfall of Each Country (2024)",
+  "width": 800,
+  "height": 400,
+  "projection": {"type": "equalEarth"},
+  "layer": [
+    // 🌊 Ocean background
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
+        "format": {"type": "topojson", "feature": "oceans"}
+      },
+      "mark": {"type": "geoshape", "fill": "skyblue"}
+    },
+    // 🗺️ Graticules
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
+        "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}
+      },
+      "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
+    },
+    // 🟩 Rainfall choropleth
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
+        "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}
+      },
+      "transform": [
+        {
+          "lookup": "properties.NAME",
+          "from": {
+            "data": {"url": "data/covid_10_10_2020.csv"},
+            "key": "Country",
+            "fields": ["Average annual rainfall", "Longitude", "Latitude"]
           }
         }
       ],
-      "projection": {"type": "equalEarth"},
-      "layer": [
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
-                   "format": {"type": "topojson", "feature": "oceans"}},
-          "mark": {"type": "geoshape", "fill": "skyblue"}
-        },
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
-                   "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}},
-          "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
-        },
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
-                   "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}},
-          "transform": [
-            {"lookup": "properties.NAME",
-             "from": {"data": {"url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"},
-                      "key": "Country",
-                      "fields": ["Active"]}},
-            {"calculate": "datum.Active", "as": "Average temperature in 2024"},
-            {"filter": "datum['Average temperature in 2024'] >= temp_filter"}
-          ],
-          "mark": {"type": "geoshape", "stroke": "white"},
-          "encoding": {
-            "color": {"field": "Average temperature in 2024",
-                      "type": "quantitative",
-                      "scale": {"type": "threshold",
-                                "domain": [0,5,10,15,20,25],
-                                "range": ["#fff7ec","#fee8c8","#fdd49e","#fdbb84","#fc8d59","#e34a33","#b30000"]}},
-            "tooltip": [
-              {"field": "properties.NAME", "type": "nominal", "title": "Country"},
-              {"field": "Average temperature in 2024", "type": "quantitative", "format": ".1f"}
-            ]
+      "mark": {"type": "geoshape", "stroke": "white"},
+      "encoding": {
+        "color": {
+          "field": "Average annual rainfall",
+          "type": "quantitative",
+          "title": "Rainfall (mm)",
+          "scale": {
+            "type": "threshold",
+            "domain": [250, 500, 750, 1000, 2000, 3000],
+            "range": ["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#3182bd","#08519c"]
           }
-        }
-      ]
-    };
-
-    // === MAP 1B: Average Annual Rainfall ===
-    const mapRainfall = {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "title": "Average Annual Rainfall of Each Country (2024)",
-      "width": 800,
-      "height": 400,
-      "projection": {"type": "equalEarth"},
-      "layer": [
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
-                   "format": {"type": "topojson", "feature": "oceans"}},
-          "mark": {"type": "geoshape", "fill": "skyblue"}
         },
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
-           "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}},
-            "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
-        },
-        {
-          "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
-                   "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}},
-          "transform": [
-            {"lookup": "properties.NAME",
-             "from": {
-               "data": {"url": "data/covid_10_10_2020.csv"},
-               "key": "Country",
-               "fields": ["Average annual rainfall"]
-             }}
-          ],
-          "mark": {"type": "geoshape", "stroke": "white"},
-          "encoding": {
-            "color": {
-              "field": "Average annual rainfall",
-              "type": "quantitative",
-              "title": "Rainfall (mm)",
-              "scale": {
-                "type": "threshold",
-                "domain": [250, 500, 750, 1000, 2000, 3000],
-                "range": ["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#3182bd","#08519c"]
-              }
-            },
-            "tooltip": [
-              {"field": "properties.NAME", "type": "nominal", "title": "Country"},
-              {"field": "Average annual rainfall", "type": "quantitative", "format": ".1f"}
-            ]
-          }
-        }
-      ]
-    };
+        "tooltip": [
+          {"field": "properties.NAME", "type": "nominal", "title": "Country"},
+          {"field": "Average annual rainfall", "type": "quantitative", "format": ".1f"}
+        ]
+      }
+    },
+    // ✍️ Text annotation for max rainfall
+    {
+      "data": {"url": "data/covid_10_10_2020.csv"},
+      "transform": [
+        {"filter": "datum['Average annual rainfall'] != null"},
+        {"window": [{"op": "rank", "as": "rank"}], "sort": [{"field": "Average annual rainfall", "order": "descending"}]},
+        {"filter": "datum.rank == 1"},
+        {"calculate": "datum.Country + ' is the wettest country'", "as": "annotation_text"} // ✅ add this line
+      ],
+      "mark": {
+        "type": "text",
+        "fontSize": 14,
+        "fontWeight": "bold",
+        "color": "black",
+        "dy": -10
+      },
+      "encoding": {
+        "longitude": {"field": "Longitude", "type": "quantitative"},
+        "latitude": {"field": "Latitude", "type": "quantitative"},
+        "text": {"field": "annotation_text"}
+      }
+    }
+  ]
+};
 
-    // === MAP 2: Population ===
+
+    // === MAP 2: Population (💜 purple scheme) ===
     const mapPopulation = {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
       "title": "Population of Each Country (2024)",
@@ -229,21 +324,20 @@
       "projection": {"type": "equalEarth"},
       "layer": [
         {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
-                  "format": {"type": "topojson", "feature": "oceans"}},
-         "mark": {"type": "geoshape", "fill": "skyblue"}},
+                  "format": {"type": "topojson","feature": "oceans"}},
+         "mark": {"type": "geoshape","fill": "skyblue"}},
         {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
-                  "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}},
-         "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}},
+                  "format": {"type": "topojson","feature": "ne_110m_graticules_30"}},
+         "mark": {"type": "geoshape","fill": null,"stroke": "lightgray"}},
         {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
-                  "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}},
+                  "format": {"type": "topojson","feature": "ne_110m_admin_0_countries"}},
          "transform": [{"lookup": "properties.NAME",
                         "from": {"data": {"url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"},
-                                 "key": "Country",
-                                 "fields": ["Population"]}}],
-         "mark": {"type": "geoshape", "stroke": "white"},
-         "encoding": {"color": {"field": "Population", "type": "quantitative", "scale": {"scheme": "purples"}},
-                      "tooltip": [{"field": "properties.NAME", "type": "nominal", "title": "Country"},
-                                  {"field": "Population", "type": "quantitative", "format": ","}]}}
+                                 "key": "Country","fields": ["Population"]}}],
+         "mark": {"type": "geoshape","stroke": "white"},
+         "encoding": {"color": {"field": "Population","type": "quantitative","scale": {"scheme": "purples"},"title": "Population"},
+                      "tooltip": [{"field": "properties.NAME","type": "nominal","title": "Country"},
+                                  {"field": "Population","type": "quantitative","format": ","}]}}
       ]
     };
 
@@ -251,56 +345,159 @@
     const mapLifeExpectancy = {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
       "title": "Average Life Expectancy of Each Country (2024)",
-      "width": 800,
+      "width": "container",
       "height": 400,
       "projection": {"type": "equalEarth"},
       "layer": [
         {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/7_others/oceans.topojson",
-                  "format": {"type": "topojson", "feature": "oceans"}},
-         "mark": {"type": "geoshape", "fill": "skyblue"}
-        },
-        {
-           "data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
-           "format": {"type": "topojson", "feature": "ne_110m_graticules_30"}},
-           "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
-        },
+                  "format": {"type": "topojson","feature": "oceans"}},
+         "mark": {"type": "geoshape","fill": "skyblue"}},
+        {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/2_symbol_map/js/WorldMapWithGraticules.topojson",
+                  "format": {"type": "topojson","feature": "ne_110m_graticules_30"}},
+         "mark": {"type": "geoshape","fill": null,"stroke": "lightgray"}},
         {"data": {"url": "https://raw.githubusercontent.com/FIT3179/Vega-Lite/main/3_choropleth_map/js/ne_110m_admin_0_countries.topojson",
-                  "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}},
+                  "format": {"type": "topojson","feature": "ne_110m_admin_0_countries"}},
          "transform": [{"lookup": "properties.NAME",
                         "from": {"data": {"url": "data/covid_10_10_2020.csv"},
-                                 "key": "Country",
-                                 "fields": ["Average life expectancy"]}}],
-         "mark": {"type": "geoshape", "stroke": "white"},
-         "encoding": {"color": {"field": "Average life expectancy", "type": "quantitative",
-                                "scale": {"type": "threshold",
-                                          "domain": [50,55,60,65,70,75,80,85],
+                                 "key": "Country","fields": ["Average life expectancy"]}}],
+         "mark": {"type": "geoshape","stroke": "white"},
+         "encoding": {"color": {"field": "Average life expectancy","type": "quantitative",
+                                "scale": {"type": "threshold","domain": [50,55,60,65,70,75,80,85],
                                           "range": ["#ffffcc","#d9f0a3","#addd8e","#78c679","#41ab5d","#238443","#006837","#004529","#002d19"]}},
-                      "tooltip": [{"field": "properties.NAME", "type": "nominal", "title": "Country"},
-                                  {"field": "Average life expectancy", "type": "quantitative", "format": ".1f"}]}}
+                      "tooltip": [{"field": "properties.NAME","type": "nominal","title": "Country"},
+                                  {"field": "Average life expectancy","type": "quantitative","format": ".1f"}]}}
       ]
     };
 
     // === BAR CHART: Top 5 Life Expectancy ===
     const barLifeExpectancy = {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "title": "Top 5 Countries by Average Life Expectancy",
-      "width": 400,
+      "title": "Top 8 Countries by Average Life Expectancy",
+      "width": "container",
       "height": 400,
       "data": {"url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"},
       "transform": [
         {"filter": "datum['Average life expectancy'] != null"},
-        {"window": [{"op": "rank", "as": "rank"}], "sort": [{"field": "Average life expectancy", "order": "descending"}]},
+        {"window": [{"op": "rank","as": "rank"}], "sort": [{"field": "Average life expectancy","order": "descending"}]},
         {"filter": "datum.rank <= 5"}
       ],
       "mark": "bar",
       "encoding": {
-        "x": {"field": "Country", "type": "nominal", "sort": "-y", "title": "Country"},
-        "y": {"field": "Average life expectancy", "type": "quantitative", "title": "Average Life Expectancy"},
-        "color": {"field": "Average life expectancy", "type": "quantitative", "scale": {"scheme": "greens"}},
-        "tooltip": [{"field": "Country", "type": "nominal"},
-                    {"field": "Average life expectancy", "type": "quantitative", "format": ".1f"}]
+        "x": {"field": "Country","type": "nominal","sort": "-y","title": "Country"},
+        "y": {"field": "Average life expectancy","type": "quantitative","title": "Average Life Expectancy"},
+        "color": {"field": "Average life expectancy","type": "quantitative","scale": {"scheme": "greens"}},
+        "tooltip": [{"field": "Country","type": "nominal"},
+                    {"field": "Average life expectancy","type": "quantitative","format": ".1f"}]
       }
     };
+
+    // === LINE CHART: Temperature vs Life Expectancy for Selected Countries ===
+const lineTempLife = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Comparison of average temperature and life expectancy for 5 countries",
+  "title": "Average Temperature vs Life Expectancy (2024)",
+  "width": 700,
+  "height": 400,
+  "data": {
+    "url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"
+  },
+  "transform": [
+    {"filter": "indexof(['Malaysia','Australia','China','Mongolia','Russia'], datum.Country) >= 0"}
+  ],
+  "layer": [
+    // 🔴 Temperature line
+    {
+      "mark": {"type": "line", "color": "#e34a33", "strokeWidth": 3, "point": true},
+      "encoding": {
+        "x": {"field": "Country", "type": "nominal", "title": "Country"},
+        "y": {
+          "field": "Active",
+          "type": "quantitative",
+          "title": "Average Temperature (°C)",
+          "axis": {"titleColor": "#e34a33"}
+        },
+        "tooltip": [
+          {"field": "Country", "type": "nominal"},
+          {"field": "Active", "type": "quantitative", "format": ".1f"}
+        ]
+      }
+    },
+    // 💚 Life expectancy line (secondary axis)
+    {
+      "mark": {"type": "line", "color": "#41ab5d", "strokeWidth": 3, "point": true},
+      "encoding": {
+        "x": {"field": "Country", "type": "nominal"},
+        "y": {
+          "field": "Average life expectancy",
+          "type": "quantitative",
+          "title": "Life Expectancy (years)",
+          "axis": {"orient": "right", "titleColor": "#41ab5d"}
+        },
+        "tooltip": [
+          {"field": "Country", "type": "nominal"},
+          {"field": "Average life expectancy", "type": "quantitative", "format": ".1f"}
+        ]
+      }
+    }
+  ],
+  "resolve": {"scale": {"y": "independent"}} // ✅ Separate Y-axes
+};
+
+// === LINE CHART: Average Annual Rainfall vs Life Expectancy ===
+const lineRainLife = {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Comparison of average annual rainfall and life expectancy for 5 countries",
+  "title": "Average Annual Rainfall vs Life Expectancy (2024)",
+  "width": 700,
+  "height": 400,
+  "data": {
+    "url": "https://raw.githubusercontent.com/wamnsdx/FIT3179-Visualisation-project-2/main/data/covid_10_10_2020.csv"
+  },
+  "transform": [
+    // ✅ Only keep these 5 countries
+    {"filter": "indexof(['Malaysia','Australia','China','Mongolia','Russia'], datum.Country) >= 0"}
+  ],
+  "layer": [
+    // 💙 Rainfall line (left axis)
+    {
+      "mark": {"type": "line", "color": "#3182bd", "strokeWidth": 3, "point": true},
+      "encoding": {
+        "x": {"field": "Country", "type": "nominal", "title": "Country"},
+        "y": {
+          "field": "Average annual rainfall",
+          "type": "quantitative",
+          "title": "Average Annual Rainfall (mm)",
+          "axis": {"titleColor": "#3182bd"}
+        },
+        "tooltip": [
+          {"field": "Country", "type": "nominal"},
+          {"field": "Average annual rainfall", "type": "quantitative", "format": ".1f", "title": "Average Annual Rainfall (mm)"}
+        ]
+      }
+    },
+    // 💚 Life expectancy line (right axis)
+    {
+      "mark": {"type": "line", "color": "#41ab5d", "strokeWidth": 3, "point": true},
+      "encoding": {
+        "x": {"field": "Country", "type": "nominal"},
+        "y": {
+          "field": "Average life expectancy",
+          "type": "quantitative",
+          "title": "Life Expectancy (years)",
+          "axis": {"orient": "right", "titleColor": "#41ab5d"}
+        },
+        "tooltip": [
+          {"field": "Country", "type": "nominal"},
+          {"field": "Average life expectancy", "type": "quantitative", "format": ".1f"}
+        ]
+      }
+    }
+  ],
+  // ✅ Independent Y-axes (rainfall on left, life expectancy on right)
+  "resolve": {"scale": {"y": "independent"}}
+};
+
+
 
     // === EMBED ALL VISUALISATIONS ===
     vegaEmbed("#map_temp", mapTemperature);
@@ -308,6 +505,9 @@
     vegaEmbed("#map_pop", mapPopulation);
     vegaEmbed("#map_life", mapLifeExpectancy);
     vegaEmbed("#bar_life", barLifeExpectancy);
+    vegaEmbed("#line_temp_life", lineTempLife);
+    vegaEmbed("#line_rain_life", lineRainLife);
+
   </script>
 </body>
 </html>
